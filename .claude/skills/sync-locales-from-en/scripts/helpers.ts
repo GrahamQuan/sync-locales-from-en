@@ -24,7 +24,8 @@ const SKILL_DIR = path.join(process.cwd(), '.claude', 'skills', 'sync-locales-fr
 const TODAY = new Date().toISOString().split('T')[0];
 const TEMP_ROOT = path.join(SKILL_DIR, 'temp', TODAY);
 export const REFERENCE_DIR = path.join(TEMP_ROOT, 'reference');
-export const INTERMEDIATE_DIR = path.join(TEMP_ROOT, 'intermediate');
+export const DRAFT_DIR = path.join(TEMP_ROOT, 'draft');
+export const TRANSLATION_DIR = path.join(TEMP_ROOT, 'translation');
 export const FINAL_DIR = path.join(TEMP_ROOT, 'final');
 export const MESSAGES_DIR_EXPORT = MESSAGES_DIR;
 

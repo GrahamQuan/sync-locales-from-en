@@ -14,11 +14,12 @@ Synchronize all locale translation files with `messages/en/` as the base referen
 ## One-click workflow
 
 1. **Compare** — `pnpm i18n:compare` finds missing keys per locale
-2. **Extract** — `pnpm i18n:extract` generates base files + intermediate flat files for LLM translation
-3. **Translate** — Sonnet subagents translate flat `intermediate/{locale}.json` files in parallel
-4. **Unflatten** — `pnpm i18n:unflatten` converts translated flat files into nested JSON in `final/`
-5. **Merge** — `pnpm i18n:merge` writes translations back, preserving en.json key order
-6. **Test** — `pnpm i18n:test` validates all locales match en.json structure
+2. **Extract** — `pnpm i18n:extract` generates reference files + draft flat files for LLM translation
+3. **Prepare** — Copy `draft/` → `translation/` (only locales not yet in `translation/`)
+4. **Translate** — Sonnet subagents translate flat `translation/{locale}.json` files in parallel
+5. **Unflatten** — `pnpm i18n:unflatten` converts translated files into nested JSON in `final/`
+6. **Merge** — `pnpm i18n:merge` writes translations back, preserving en.json key order
+7. **Test** — `pnpm i18n:test` validates all locales match en.json structure
 
 ## Hard constraints (must follow)
 
@@ -28,6 +29,7 @@ Synchronize all locale translation files with `messages/en/` as the base referen
 - Use only pre-existing repo scripts for automation:
   - `pnpm i18n:compare`
   - `pnpm i18n:extract`
+  - `pnpm i18n:copy-draft`
   - `pnpm i18n:unflatten`
   - `pnpm i18n:merge`
   - `pnpm i18n:test`
@@ -45,8 +47,9 @@ All scripts live in `.claude/skills/sync-locales-from-en/scripts/`:
 
 - `helpers.ts` — Shared utilities (flatten, unflatten, key ordering, locale discovery, temp dir constants)
 - `compare-locales.ts` — Find missing keys per locale per file, output report to `temp/YYYY-MM-DD/reference/`
-- `extract-locales.ts` — Create `reference/{file}.json` (English union) and `intermediate/{locale}.json` (flat key::value per locale)
-- `unflatten-translations.ts` — Read translated `intermediate/{locale}.json`, split by file, unflatten → `final/{locale}/{file}.json`
+- `extract-locales.ts` — Create `reference/{file}.json` (English union) and `draft/{locale}.json` (flat key::value per locale)
+- `copy-locales-draft.ts` — Copy `draft/{locale}.json` → `translation/{locale}.json`, skipping locales already in `translation/`
+- `unflatten-translations.ts` — Read translated `translation/{locale}.json`, split by file, unflatten → `final/{locale}/{file}.json`
 - `merge-translations.ts` — Merge `temp/YYYY-MM-DD/final/{locale}/{file}.json` into `messages/{locale}/{file}.json` with en key order
 - `test-locales.ts` — Validate all locale files match en/ structure (missing keys, extra keys, structure)
 
@@ -59,20 +62,25 @@ All scripts live in `.claude/skills/sync-locales-from-en/scripts/`:
     main.json                    # English values for missing keys (union across locales)
     ui.json
     model.json
-  intermediate/
-    de.json                      # Flat key::value for LLM translation
+  draft/
+    de.json                      # Flat key::value for LLM translation (pristine, never modified)
     es.json
     fr.json
     zh.json
+  translation/
+    de.json                      # Copied from draft/, subagents write translations here
+    es.json                      # If a subagent is interrupted, this file persists
+    fr.json
+    zh.json
   final/
-    de/main.json                 # Nested JSON, unflattened from translated intermediate
+    de/main.json                 # Nested JSON, unflattened from translated files
     de/ui.json
     es/...
 ```
 
-## Intermediate file format
+## Draft / Translation file format
 
-Each `intermediate/{locale}.json` is a flat JSON object with `{file}::{dotpath}` keys:
+Each `draft/{locale}.json` and `translation/{locale}.json` is a flat JSON object with `{file}::{dotpath}` keys:
 
 ```json
 {
@@ -108,18 +116,22 @@ If no missing keys are found, stop here.
 
 Run `pnpm i18n:extract` to generate:
 - `temp/YYYY-MM-DD/reference/{file}.json` — English values for all missing keys (union across locales)
-- `temp/YYYY-MM-DD/intermediate/{locale}.json` — Flat JSON with `{file}::{dotpath}` keys and English values
+- `temp/YYYY-MM-DD/draft/{locale}.json` — Flat JSON with `{file}::{dotpath}` keys and English values
 
-### Step 3: Translate (sonnet subagents)
+### Step 3: Prepare translation/
+
+Run `pnpm i18n:copy-draft` to copy `draft/{locale}.json` → `translation/{locale}.json`. Locales already in `translation/` (from a previous interrupted run) are skipped — partially-translated files are preserved.
+
+### Step 4: Translate (sonnet subagents)
 
 Launch one sonnet subagent per locale using the Agent tool with `run_in_background: true` and `model: "sonnet"`. All subagents run in parallel.
 
-Each subagent translates the flat file at `temp/YYYY-MM-DD/intermediate/{locale}.json`.
+Each subagent translates the flat file at `temp/YYYY-MM-DD/translation/{locale}.json`.
 
-Each subagent receives this prompt template (fill in `{locale}`, `{language}`, and `{intermediate_file}`):
+Each subagent receives this prompt template (fill in `{locale}`, `{language}`, and `{translation_file}`):
 
 ```
-You are a professional translator. Translate the JSON file at `{intermediate_file}` from English to {language} ({locale}).
+You are a professional translator. Translate the JSON file at `{translation_file}` from English to {language} ({locale}).
 
 The file is a flat JSON object where keys use the format `{source_file}::{dotpath}` and values are English text:
 
@@ -129,7 +141,7 @@ The file is a flat JSON object where keys use the format `{source_file}::{dotpat
 }
 
 Instructions:
-1. Read the JSON file at `{intermediate_file}`.
+1. Read the JSON file at `{translation_file}`.
 2. Translate ONLY the string values to {language}. Keep all JSON keys exactly as-is.
 3. Write the translated JSON back to the same file path.
 
@@ -143,7 +155,7 @@ Translation rules:
 Read the file, translate all values, write it back.
 ```
 
-`{intermediate_file}` should be set to `.claude/skills/sync-locales-from-en/temp/YYYY-MM-DD/intermediate/{locale}.json`.
+`{translation_file}` should be set to `.claude/skills/sync-locales-from-en/temp/YYYY-MM-DD/translation/{locale}.json`.
 
 After launching all subagents, wait for all to complete by polling with `TaskOutput`.
 
@@ -154,15 +166,15 @@ Language mapping (locale → language name):
 - th → Thai, tw → Traditional Chinese, vi → Vietnamese
 - For unknown locales, use the locale code as the language name
 
-### Step 4: Unflatten
+### Step 5: Unflatten
 
-Run `pnpm i18n:unflatten` to convert translated `intermediate/{locale}.json` flat files into nested JSON at `final/{locale}/{file}.json`.
+Run `pnpm i18n:unflatten` to convert translated `translation/{locale}.json` flat files into nested JSON at `final/{locale}/{file}.json`.
 
-### Step 5: Merge
+### Step 6: Merge
 
 Run `pnpm i18n:merge` to merge translated files from `temp/YYYY-MM-DD/final/{locale}/{file}.json` into `messages/{locale}/{file}.json`. Existing translations are preserved; new keys are added. Key order follows en/{file}.json.
 
-### Step 6: Test
+### Step 7: Test
 
 Run `pnpm i18n:test` to validate all locale files match en/ structure.
 
@@ -190,8 +202,9 @@ Basic pipeline: compare → extract → translate (Google Translate free API) �
 - `messages/en/` as sole base
 
 ### v2 (current)
-- Intermediate flat format: `{file}::{dotpath}::{value}` for safer LLM translation
+- Flat JSON format: `{file}::{dotpath}` keys for safer LLM translation
 - No nested JSON during translation — eliminates broken JSON structure risk
-- Token-efficient: flat lines instead of nested JSON
-- `i18n/` renamed to `final/` for clarity
+- Token-efficient: flat key-value pairs instead of nested JSON
+- Draft/translation split: `draft/` stays pristine, `translation/` is the working copy
+- Interrupted subagents can be resumed — `translation/{locale}.json` persists
 - New `unflatten` step converts translated flat files back to nested JSON
