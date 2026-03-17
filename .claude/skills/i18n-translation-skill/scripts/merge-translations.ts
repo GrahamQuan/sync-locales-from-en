@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /**
  * Merge translated temp files back to messages/ directory
- * Preserves key order from en.json
+ * Preserves key order from en/{file}.json
  *
  * Usage: pnpm i18n:merge
  */
@@ -10,53 +10,66 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { flattenObject, getKeyOrder, getLocales, unflattenWithOrder, type NestedObject } from './helpers';
+import { flattenObject, getKeyOrder, getLocales, getMessageFiles, FINAL_DIR, MESSAGES_DIR_EXPORT, stringifySorted, unflattenWithOrder, type NestedObject } from './helpers';
 
-const MESSAGES_DIR = path.join(process.cwd(), 'messages');
-const WORK_DIR = path.join(process.cwd(), 'i18n-via-en', new Date().toISOString().split('T')[0]);
+const MESSAGES_DIR = MESSAGES_DIR_EXPORT;
 
-/**
- * Merge one locale file
- */
-function mergeLocale(locale: string, keyOrder: string[]) {
-  const tempPath = path.join(WORK_DIR, `${locale}.json`);
-  const targetPath = path.join(MESSAGES_DIR, `${locale}.json`);
+function mergeLocaleFile(locale: string, file: string, keyOrder: string[]) {
+  const tempPath = path.join(FINAL_DIR, locale, file);
+  const targetPath = path.join(MESSAGES_DIR, locale, file);
 
   if (!fs.existsSync(tempPath)) {
-    console.log(`⏭️  ${locale}.json: No temp file, skipping`);
     return;
   }
 
-  const existingFlat = flattenObject(JSON.parse(fs.readFileSync(targetPath, 'utf-8')) as NestedObject);
   const tempFlat = flattenObject(JSON.parse(fs.readFileSync(tempPath, 'utf-8')) as NestedObject);
 
-  // Merge: temp translations overwrite existing ones
+  let existingFlat: Record<string, string> = {};
+  if (fs.existsSync(targetPath)) {
+    existingFlat = flattenObject(JSON.parse(fs.readFileSync(targetPath, 'utf-8')) as NestedObject);
+  }
+
   const mergedFlat = { ...existingFlat, ...tempFlat };
   const ordered = unflattenWithOrder(mergedFlat, keyOrder);
 
-  fs.writeFileSync(targetPath, `${JSON.stringify(ordered, null, 2)}\n`);
-  console.log(`✅ ${locale}.json: Merged successfully (${Object.keys(tempFlat).length} new/updated keys)`);
+  const targetDir = path.dirname(targetPath);
+  if (!fs.existsSync(targetDir)) {
+    fs.mkdirSync(targetDir, { recursive: true });
+  }
+
+  fs.writeFileSync(targetPath, `${stringifySorted(ordered)}\n`);
+  console.log(`✅ ${locale}/${file}: Merged ${Object.keys(tempFlat).length} keys`);
 }
 
 async function main() {
   console.log('🔄 Starting merge process...\n');
 
-  if (!fs.existsSync(WORK_DIR)) {
-    console.error(`❌ Error: Work directory not found: ${WORK_DIR}`);
-    console.error('   Please run translation step first');
+  if (!fs.existsSync(FINAL_DIR)) {
+    console.error(`❌ Error: Final directory not found: ${FINAL_DIR}`);
+    console.error('   Please run translation and unflatten steps first');
     process.exit(1);
   }
 
-  const enPath = path.join(MESSAGES_DIR, 'en.json');
-  const enJson = JSON.parse(fs.readFileSync(enPath, 'utf-8')) as NestedObject;
-  const keyOrder = getKeyOrder(enJson);
-  console.log(`📚 Key order from en.json: ${keyOrder.length} keys\n`);
-
+  const messageFiles = getMessageFiles();
   const locales = getLocales();
-  locales.forEach((locale) => mergeLocale(locale, keyOrder));
+
+  // Cache key orders per file
+  const keyOrders = new Map<string, string[]>();
+  messageFiles.forEach((file) => {
+    const enPath = path.join(MESSAGES_DIR, 'en', file);
+    const enJson = JSON.parse(fs.readFileSync(enPath, 'utf-8')) as NestedObject;
+    keyOrders.set(file, getKeyOrder(enJson));
+  });
+
+  console.log(`📚 Files: ${messageFiles.join(', ')}\n`);
+
+  locales.forEach((locale) => {
+    messageFiles.forEach((file) => {
+      mergeLocaleFile(locale, file, keyOrders.get(file)!);
+    });
+  });
 
   console.log('\n✅ Merge complete!');
-  console.log(`   Updated files in: ${MESSAGES_DIR}`);
 }
 
 main().catch(console.error);

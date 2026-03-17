@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm i18n:compare)",
+      "Bash(pnpm i18n:translate)",
+      "Bash(pnpm:*)",
+      "Bash(find /Users/a6677/Documents/open-source/i18n-translation-skill -not -path */node_modules/* -type d)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}

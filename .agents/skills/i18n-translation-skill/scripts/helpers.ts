@@ -12,11 +12,21 @@ export interface NestedObject {
 
 export interface MissingReport {
   locale: string;
+  file: string;
   missingKeys: string[];
   missingCount: number;
 }
 
 const MESSAGES_DIR = path.join(process.cwd(), 'messages');
+
+// Temp directory structure for translation workflow
+const SKILL_DIR = path.join(process.cwd(), '.claude', 'skills', 'i18n-translation-skill');
+const TODAY = new Date().toISOString().split('T')[0];
+const TEMP_ROOT = path.join(SKILL_DIR, 'temp', TODAY);
+export const REFERENCE_DIR = path.join(TEMP_ROOT, 'reference');
+export const INTERMEDIATE_DIR = path.join(TEMP_ROOT, 'intermediate');
+export const FINAL_DIR = path.join(TEMP_ROOT, 'final');
+export const MESSAGES_DIR_EXPORT = MESSAGES_DIR;
 
 /**
  * Known language names for translation prompts.
@@ -40,13 +50,23 @@ const LANGUAGE_NAMES: Record<string, string> = {
 };
 
 /**
- * Dynamically get locale codes from messages/ directory (excludes en.json)
+ * Dynamically get locale codes from messages/ directory (excludes en)
  */
 export function getLocales(): string[] {
   return fs
     .readdirSync(MESSAGES_DIR)
-    .filter((f) => f.endsWith('.json') && f !== 'en.json')
-    .map((f) => f.replace('.json', ''))
+    .filter((f) => f !== 'en' && fs.statSync(path.join(MESSAGES_DIR, f)).isDirectory())
+    .sort();
+}
+
+/**
+ * Get message file names from en/ directory (e.g. ['main.json', 'ui.json', 'model.json'])
+ */
+export function getMessageFiles(): string[] {
+  const enDir = path.join(MESSAGES_DIR, 'en');
+  return fs
+    .readdirSync(enDir)
+    .filter((f) => f.endsWith('.json'))
     .sort();
 }
 
@@ -103,7 +123,7 @@ export function unflattenObject(flat: Record<string, string>): NestedObject {
 }
 
 /**
- * Sort keys within a level: title, description first, then numbered keys (1,2,3...), then rest
+ * Sort keys within a level: title, description first, then numbered keys (1,2,3...), then rest preserving original order
  */
 function sortKeys(keys: string[]): string[] {
   const priority: Record<string, number> = { title: 0, description: 1 };
@@ -115,6 +135,48 @@ function sortKeys(keys: string[]): string[] {
     if (pa === 2) return Number(a) - Number(b);
     return 0;
   });
+}
+
+/**
+ * Recursively sort keys in a nested object: title/description first, then numbered, then rest
+ * Note: JS objects enumerate integer keys first, so use stringifySorted() for correct JSON output.
+ */
+export function sortNestedObject(obj: NestedObject): NestedObject {
+  const sorted: NestedObject = {};
+  const orderedKeys = sortKeys(Object.keys(obj));
+
+  orderedKeys.forEach((key) => {
+    const value = obj[key];
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      sorted[key] = sortNestedObject(value as NestedObject);
+    } else {
+      sorted[key] = value;
+    }
+  });
+
+  return sorted;
+}
+
+/**
+ * Stringify a nested object with custom key ordering at every level.
+ * JS objects always enumerate integer keys before string keys, so JSON.stringify
+ * cannot produce the desired order. This function handles it manually.
+ */
+export function stringifySorted(obj: NestedObject, indent = 2, depth = 0): string {
+  const pad = ' '.repeat(indent * (depth + 1));
+  const closePad = ' '.repeat(indent * depth);
+  const orderedKeys = sortKeys(Object.keys(obj));
+
+  const entries = orderedKeys.map((key) => {
+    const value = obj[key];
+    const jsonKey = JSON.stringify(key);
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      return `${pad}${jsonKey}: ${stringifySorted(value as NestedObject, indent, depth + 1)}`;
+    }
+    return `${pad}${jsonKey}: ${JSON.stringify(value)}`;
+  });
+
+  return `{\n${entries.join(',\n')}\n${closePad}}`;
 }
 
 /**

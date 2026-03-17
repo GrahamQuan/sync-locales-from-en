@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /**
- * Compare en.json with other locale files to find missing keys
- * Output: JSON report of missing keys per locale
+ * Compare en/ with other locale directories to find missing keys
+ * Output: JSON report of missing keys per locale per file
  *
  * Usage: pnpm i18n:compare
  */
@@ -10,34 +10,16 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { flattenObject, getLocales, type MissingReport } from './helpers';
+import { REFERENCE_DIR, flattenObject, getLocales, getMessageFiles, MESSAGES_DIR_EXPORT, type MissingReport } from './helpers';
 
-const MESSAGES_DIR = path.join(process.cwd(), 'messages');
-const OUTPUT_DIR = path.join(process.cwd(), 'i18n-via-en', new Date().toISOString().split('T')[0]);
+const MESSAGES_DIR = MESSAGES_DIR_EXPORT;
+const OUTPUT_DIR = REFERENCE_DIR;
 
-/**
- * Get all flattened keys from a JSON file
- */
 function getKeysFromFile(filePath: string): Set<string> {
   const content = fs.readFileSync(filePath, 'utf-8');
   const json = JSON.parse(content);
   const flattened = flattenObject(json);
   return new Set(Object.keys(flattened));
-}
-
-/**
- * Compare en.json with target locale file
- */
-function compareLocale(locale: string, enKeys: Set<string>): MissingReport {
-  const localePath = path.join(MESSAGES_DIR, `${locale}.json`);
-  const localeKeys = getKeysFromFile(localePath);
-  const missingKeys = Array.from(enKeys).filter((key) => !localeKeys.has(key));
-
-  return {
-    locale,
-    missingKeys,
-    missingCount: missingKeys.length,
-  };
 }
 
 async function main() {
@@ -47,15 +29,32 @@ async function main() {
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
   }
 
-  const enPath = path.join(MESSAGES_DIR, 'en.json');
-  const enKeys = getKeysFromFile(enPath);
-  console.log(`📚 Base file (en.json): ${enKeys.size} keys\n`);
-
+  const messageFiles = getMessageFiles();
   const locales = getLocales();
-  const reports: MissingReport[] = locales.map((locale) => {
-    const report = compareLocale(locale, enKeys);
-    console.log(`${locale}.json: ${report.missingCount} missing keys`);
-    return report;
+  const reports: MissingReport[] = [];
+  let totalKeys = 0;
+
+  messageFiles.forEach((file) => {
+    const enPath = path.join(MESSAGES_DIR, 'en', file);
+    const enKeys = getKeysFromFile(enPath);
+    totalKeys += enKeys.size;
+
+    locales.forEach((locale) => {
+      const localePath = path.join(MESSAGES_DIR, locale, file);
+      let missingKeys: string[];
+
+      if (!fs.existsSync(localePath)) {
+        missingKeys = Array.from(enKeys);
+      } else {
+        const localeKeys = getKeysFromFile(localePath);
+        missingKeys = Array.from(enKeys).filter((key) => !localeKeys.has(key));
+      }
+
+      if (missingKeys.length > 0) {
+        reports.push({ locale, file, missingKeys, missingCount: missingKeys.length });
+        console.log(`${locale}/${file}: ${missingKeys.length} missing keys`);
+      }
+    });
   });
 
   const reportPath = path.join(OUTPUT_DIR, 'missing-keys-report.json');
@@ -64,8 +63,10 @@ async function main() {
 
   const totalMissing = reports.reduce((sum, r) => sum + r.missingCount, 0);
   console.log('\n📊 Summary:');
-  console.log(`   Total locales: ${locales.length}`);
-  console.log(`   Total missing keys: ${totalMissing}`);
+  console.log(`   Files: ${messageFiles.join(', ')}`);
+  console.log(`   Locales: ${locales.length}`);
+  console.log(`   Total en keys: ${totalKeys}`);
+  console.log(`   Total missing: ${totalMissing}`);
 
   if (totalMissing === 0) {
     console.log('\n🎉 All locales are in sync!');

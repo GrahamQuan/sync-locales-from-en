@@ -4,11 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "i18n:compare": "tsx .agents/skills/i18n-translation-skill/scripts/compare-locales.ts",
-    "i18n:extract": "tsx .agents/skills/i18n-translation-skill/scripts/extract-locales.ts",
-    "i18n:translate": "tsx .agents/skills/i18n-translation-skill/scripts/translate-locales-fast.ts",
-    "i18n:merge": "tsx .agents/skills/i18n-translation-skill/scripts/merge-translations.ts",
-    "i18n:test": "tsx .agents/skills/i18n-translation-skill/scripts/test-locales.ts"
+    "i18n:compare": "tsx .claude/skills/i18n-translation-skill/scripts/compare-locales.ts",
+    "i18n:extract": "tsx .claude/skills/i18n-translation-skill/scripts/extract-locales.ts",
+    "i18n:translate": "echo 'You should use LLM to translate.'",
+    "i18n:unflatten": "tsx .claude/skills/i18n-translation-skill/scripts/unflatten-translations.ts",
+    "i18n:merge": "tsx .claude/skills/i18n-translation-skill/scripts/merge-translations.ts",
+    "i18n:test": "tsx .claude/skills/i18n-translation-skill/scripts/test-locales.ts"
   },
   "keywords": [],
   "author": "",

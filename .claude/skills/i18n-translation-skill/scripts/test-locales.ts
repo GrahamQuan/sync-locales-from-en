@@ -1,20 +1,17 @@
 #!/usr/bin/env tsx
 /**
- * Test locale files against en.json
- * Validates that all locale files have the exact same keys and nested structure as en.json
+ * Test locale files against en/ directory
+ * Validates that all locale files have the exact same keys and nested structure
  */
 
 /* eslint-disable no-console */
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { getLocales, type NestedObject } from './helpers';
+import { getLocales, getMessageFiles, type NestedObject } from './helpers';
 
 const MESSAGES_DIR = path.join(process.cwd(), 'messages');
 
-/**
- * Get sorted keys from a nested object with their types (leaf vs branch)
- */
 function getStructure(obj: NestedObject, prefix = ''): Map<string, 'branch' | 'leaf'> {
   const result = new Map<string, 'branch' | 'leaf'>();
 
@@ -33,42 +30,31 @@ function getStructure(obj: NestedObject, prefix = ''): Map<string, 'branch' | 'l
   return result;
 }
 
-interface TestResult {
+interface FileTestResult {
   locale: string;
+  file: string;
   pass: boolean;
   missingKeys: string[];
   extraKeys: string[];
   typeMismatches: string[];
 }
 
-/**
- * Test a single locale file against en.json structure
- */
-function testLocale(locale: string, enStructure: Map<string, 'branch' | 'leaf'>): TestResult {
-  const localePath = path.join(MESSAGES_DIR, `${locale}.json`);
+function testLocaleFile(
+  locale: string,
+  file: string,
+  enStructure: Map<string, 'branch' | 'leaf'>,
+): FileTestResult {
+  const localePath = path.join(MESSAGES_DIR, locale, file);
 
   if (!fs.existsSync(localePath)) {
-    return {
-      locale,
-      pass: false,
-      missingKeys: ['FILE NOT FOUND'],
-      extraKeys: [],
-      typeMismatches: [],
-    };
+    return { locale, file, pass: false, missingKeys: ['FILE NOT FOUND'], extraKeys: [], typeMismatches: [] };
   }
 
-  const content = fs.readFileSync(localePath, 'utf-8');
   let localeJson: NestedObject;
   try {
-    localeJson = JSON.parse(content) as NestedObject;
+    localeJson = JSON.parse(fs.readFileSync(localePath, 'utf-8')) as NestedObject;
   } catch {
-    return {
-      locale,
-      pass: false,
-      missingKeys: ['INVALID JSON'],
-      extraKeys: [],
-      typeMismatches: [],
-    };
+    return { locale, file, pass: false, missingKeys: ['INVALID JSON'], extraKeys: [], typeMismatches: [] };
   }
 
   const localeStructure = getStructure(localeJson);
@@ -94,6 +80,7 @@ function testLocale(locale: string, enStructure: Map<string, 'branch' | 'leaf'>)
 
   return {
     locale,
+    file,
     pass: missingKeys.length === 0 && extraKeys.length === 0 && typeMismatches.length === 0,
     missingKeys,
     extraKeys,
@@ -101,63 +88,56 @@ function testLocale(locale: string, enStructure: Map<string, 'branch' | 'leaf'>)
   };
 }
 
-/**
- * Main execution
- */
 async function main() {
-  console.log('🧪 Testing locale files against en.json...\n');
+  console.log('🧪 Testing locale files against en/...\n');
 
-  const enPath = path.join(MESSAGES_DIR, 'en.json');
-  const enContent = fs.readFileSync(enPath, 'utf-8');
-  const enJson = JSON.parse(enContent) as NestedObject;
-  const enStructure = getStructure(enJson);
-
-  const enLeafCount = Array.from(enStructure.values()).filter((v) => v === 'leaf').length;
-  console.log(`📚 en.json: ${enLeafCount} leaf keys, ${enStructure.size} total entries\n`);
-
-  let allPassed = true;
-
+  const messageFiles = getMessageFiles();
   const locales = getLocales();
-  const results = locales.map((locale) => testLocale(locale, enStructure));
+  let allPassed = true;
+  let totalResults = 0;
+  let passCount = 0;
 
-  results.forEach((result) => {
-    if (result.pass) {
-      console.log(`✅ ${result.locale}.json: PASS`);
-    } else {
-      allPassed = false;
-      console.log(`❌ ${result.locale}.json: FAIL`);
+  messageFiles.forEach((file) => {
+    const enPath = path.join(MESSAGES_DIR, 'en', file);
+    const enJson = JSON.parse(fs.readFileSync(enPath, 'utf-8')) as NestedObject;
+    const enStructure = getStructure(enJson);
+    const leafCount = Array.from(enStructure.values()).filter((v) => v === 'leaf').length;
+    console.log(`📚 en/${file}: ${leafCount} leaf keys`);
 
-      if (result.missingKeys.length > 0) {
-        console.log(`   Missing keys (${result.missingKeys.length}):`);
-        result.missingKeys.slice(0, 10).forEach((k) => console.log(`     - ${k}`));
-        if (result.missingKeys.length > 10) {
-          console.log(`     ... and ${result.missingKeys.length - 10} more`);
+    locales.forEach((locale) => {
+      totalResults++;
+      const result = testLocaleFile(locale, file, enStructure);
+
+      if (result.pass) {
+        passCount++;
+        console.log(`  ✅ ${locale}/${file}: PASS`);
+      } else {
+        allPassed = false;
+        console.log(`  ❌ ${locale}/${file}: FAIL`);
+
+        if (result.missingKeys.length > 0) {
+          console.log(`     Missing (${result.missingKeys.length}):`);
+          result.missingKeys.slice(0, 5).forEach((k) => console.log(`       - ${k}`));
+          if (result.missingKeys.length > 5) console.log(`       ... and ${result.missingKeys.length - 5} more`);
+        }
+        if (result.extraKeys.length > 0) {
+          console.log(`     Extra (${result.extraKeys.length}):`);
+          result.extraKeys.slice(0, 5).forEach((k) => console.log(`       - ${k}`));
+          if (result.extraKeys.length > 5) console.log(`       ... and ${result.extraKeys.length - 5} more`);
+        }
+        if (result.typeMismatches.length > 0) {
+          console.log(`     Mismatches (${result.typeMismatches.length}):`);
+          result.typeMismatches.slice(0, 5).forEach((k) => console.log(`       - ${k}`));
         }
       }
-
-      if (result.extraKeys.length > 0) {
-        console.log(`   Extra keys (${result.extraKeys.length}):`);
-        result.extraKeys.slice(0, 10).forEach((k) => console.log(`     - ${k}`));
-        if (result.extraKeys.length > 10) {
-          console.log(`     ... and ${result.extraKeys.length - 10} more`);
-        }
-      }
-
-      if (result.typeMismatches.length > 0) {
-        console.log(`   Structure mismatches (${result.typeMismatches.length}):`);
-        result.typeMismatches.slice(0, 10).forEach((k) => console.log(`     - ${k}`));
-        if (result.typeMismatches.length > 10) {
-          console.log(`     ... and ${result.typeMismatches.length - 10} more`);
-        }
-      }
-    }
+    });
+    console.log('');
   });
 
-  const passCount = results.filter((r) => r.pass).length;
-  console.log(`\n📊 Results: ${passCount}/${locales.length} passed`);
+  console.log(`📊 Results: ${passCount}/${totalResults} passed`);
 
   if (allPassed) {
-    console.log('\n🎉 All locale files match en.json structure!');
+    console.log('\n🎉 All locale files match en/ structure!');
   } else {
     console.log('\n💥 Some locale files have issues. Run /sync-i18n-via-en to fix.');
     process.exit(1);
