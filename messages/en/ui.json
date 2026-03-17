@@ -30,6 +30,47 @@
       "time": "Time",
       "datetime": "Datetime",
       "datetime-local": "Datetime Local"
+    },
+    "dialog": {
+      "title": "Dialog Box UI Component | Seamless Web Interaction Modal",
+      "description": "Elevate your user experience with our Dialog UI component – an accessible modal dialog perfect for confirmations, notifications, and form entry on modern web and mobile sites. Improve engagement and conversion with our SEO-friendly open and close dialog design.",
+      "submit": "Dialog Submit Button",
+      "cancel": "Dialog Cancel Action",
+      "close": "Close Dialog Modal",
+      "open": "Open Dialog Window"
+    },
+    "tooltip": {
+      "title": "Tooltip UI | Instant Context Popups for Better UX",
+      "description": "Enhance website usability with Tooltip UI components – provide instant info, hints, and contextual guidance to users. SEO-optimized tooltips improve accessibility and help users navigate with ease.",
+      "submit": "Tooltip Submit Action",
+      "cancel": "Tooltip Cancel",
+      "close": "Hide Tooltip",
+      "open": "Show Tooltip"
+    },
+    "popover": {
+      "title": "SEO-Optimized Popover UI | Interactive Web Elements",
+      "description": "Deploy interactive Popover UI elements for layered content, product info, or user guidance. Popovers boost engagement, reduce bounce rates, and keep users informed – essential for SEO-driven websites.",
+      "submit": "Popover Submit Button",
+      "cancel": "Popover Cancel",
+      "close": "Close Popover Content",
+      "open": "Open Popover"
+    },
+    "login-dialog": {
+      "title": "Secure Login Dialog Component | User Authentication Modal",
+      "description": "Log in securely and swiftly! Our SEO-focused Login Dialog offers a clean, accessible authentication modal with fields for email, password, signup, and quick recovery options. Boosts user trust and conversion for your brand.",
+      "submit": "Sign In Now",
+      "cancel": "Cancel Login",
+      "close": "Close Login Window",
+      "open": "Open Login Modal",
+      "email": "Enter Your Email Address",
+      "password": "Enter Your Password",
+      "confirmPassword": "Re-enter Password to Confirm",
+      "name": "Your Full Name",
+      "phone": "Mobile Phone Number",
+      "address": "Mailing Address",
+      "city": "City/Town",
+      "state": "State/Province",
+      "zip": "ZIP or Postal Code"
     }
   }
 }

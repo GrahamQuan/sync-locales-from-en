@@ -80,5 +80,67 @@
         "description": "This is the FAQ 4 section of the website"
       }
     }
+  },
+  "blog": {
+    "meta": {
+      "title": "Latest AI News & Insights | Nano Banana Blog",
+      "description": "Explore in-depth articles, updates, and expert insights about AI, technology, and innovation on the Nano Banana blog. Stay informed with cutting-edge trends, how-to guides, and case studies.",
+      "keywords": "AI blog, technology insights, artificial intelligence articles, tech news, innovation, Nano Banana blog, machine learning tips, deep learning blog, AI trends, industry news"
+    },
+    "heading": {
+      "title": "Nano Banana AI Blog – Expert Insights & Industry Trends",
+      "description": "Discover the latest articles, analysis, and tutorials about artificial intelligence, machine learning, and technology from the Nano Banana team."
+    },
+    "faq": {
+      "title": "Blog FAQ",
+      "description": "Frequently asked questions about our AI blog content, article submissions, and expert contributions.",
+      "1": {
+        "title": "How often is new content published?",
+        "description": "Our blog is updated weekly with new articles, expert interviews, and case studies covering AI and technology trends."
+      },
+      "2": {
+        "title": "Can I contribute a guest post?",
+        "description": "Yes! We welcome guest contributors. Please visit our submissions page for guidelines and contact information."
+      },
+      "3": {
+        "title": "Who writes the articles?",
+        "description": "Our blog features content written by the Nano Banana editorial team, AI experts, and guest authors from the tech industry."
+      },
+      "4": {
+        "title": "How can I stay updated with new posts?",
+        "description": "Subscribe to our newsletter or follow us on social media to receive the latest updates and blog highlights directly."
+      }
+    }
+  },
+  "terms-of-service": {
+    "meta": {
+      "title": "Terms of Service | Nano Banana",
+      "description": "Read the Nano Banana Terms of Service outlining user responsibilities, intellectual property rights, disclaimers, and legal agreements when using our website and AI products.",
+      "keywords": "terms of service, Nano Banana, legal, user agreement, website terms, AI platform rules, privacy policy, responsibilities, intellectual property, usage policy"
+    },
+    "heading": {
+      "title": "Terms of Service Agreement",
+      "description": "Review the terms and policies governing your use of the Nano Banana website and services."
+    },
+    "faq": {
+      "title": "Terms & Conditions FAQ",
+      "description": "Questions and answers about our Terms of Service, account obligations, and legal policies.",
+      "1": {
+        "title": "What is covered by the Terms of Service?",
+        "description": "Our Terms of Service cover your rights and responsibilities, content usage, data privacy, and limitations of liability when using Nano Banana."
+      },
+      "2": {
+        "title": "How do I accept the Terms of Service?",
+        "description": "By using this website or our AI products, you automatically agree to abide by the Terms of Service published here."
+      },
+      "3": {
+        "title": "What happens if I violate the terms?",
+        "description": "Violating the terms may result in restricted access, account suspension, or legal action as outlined in our policy."
+      },
+      "4": {
+        "title": "Who can I contact for legal inquiries?",
+        "description": "For any questions regarding our Terms of Service, please reach out to legal@nanobanana.com or use our contact form."
+      }
+    }
   }
 }
