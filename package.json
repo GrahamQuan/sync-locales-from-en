@@ -1,0 +1,21 @@
+{
+  "name": "i18n-translation-skill",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "i18n:compare": "tsx .agents/skills/i18n-translation-skill/scripts/compare-locales.ts",
+    "i18n:extract": "tsx .agents/skills/i18n-translation-skill/scripts/extract-locales.ts",
+    "i18n:translate": "tsx .agents/skills/i18n-translation-skill/scripts/translate-locales-fast.ts",
+    "i18n:merge": "tsx .agents/skills/i18n-translation-skill/scripts/merge-translations.ts",
+    "i18n:test": "tsx .agents/skills/i18n-translation-skill/scripts/test-locales.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.5.2",
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "tsx": "^4.21.0"
+  }
+}
