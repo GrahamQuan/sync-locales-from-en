@@ -1,0 +1,84 @@
+{
+  "home": {
+    "meta": {
+      "title": "Home",
+      "description": "This is the home page of the website",
+      "keywords": "home, page, website"
+    },
+    "heading": {
+      "title": "Welcome to the home page",
+      "description": "This is the home page of the website"
+    },
+    "feature": {
+      "title": "Features",
+      "description": "This is the features section of the website",
+      "1": {
+        "title": "Feature 1",
+        "description": "This is the feature 1 section of the website"
+      },
+      "2": {
+        "title": "Feature 2",
+        "description": "This is the feature 2 section of the website"
+      },
+      "3": {
+        "title": "Feature 3",
+        "description": "This is the feature 3 section of the website"
+      },
+      "4": {
+        "title": "Feature 4",
+        "description": "This is the feature 4 section of the website"
+      }
+    },
+    "scenario": {
+      "title": "Scenario",
+      "description": "This is the scenario section of the website",
+      "1": {
+        "title": "Scenario 1",
+        "description": "This is the scenario 1 section of the website"
+      },
+      "2": {
+        "title": "Scenario 2",
+        "description": "This is the scenario 2 section of the website"
+      },
+      "3": {
+        "title": "Scenario 3",
+        "description": "This is the scenario 3 section of the website"
+      },
+      "4": {
+        "title": "Scenario 4",
+        "description": "This is the scenario 4 section of the website"
+      }
+    }
+  },
+  "pricing": {
+    "meta": {
+      "title": "Pricing",
+      "description": "This is the pricing page of the website",
+      "keywords": "pricing, page, website"
+    },
+    "heading": {
+      "title": "Welcome to the pricing page",
+      "description": "This is the pricing page of the website"
+    },
+    "faq": {
+      "title": "FAQ",
+      "description": "This is the FAQ section of the website",
+      "1": {
+        "title": "FAQ 1",
+        "description": "This is the FAQ 1 section of the website"
+      },
+      "2": {
+        "title": "FAQ 2",
+        "description": "This is the FAQ 2 section of the website"
+      },
+      "3": {
+        "title": "FAQ 3",
+        "description": "This is the FAQ 3 section of the website"
+      },
+      "4": {
+        "title": "FAQ 4",
+        "description": "This is the FAQ 4 section of the website"
+      }
+    }
+  }
+}
