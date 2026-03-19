@@ -72,5 +72,29 @@
       "state": "State/Province",
       "zip": "ZIP or Postal Code"
     }
+  },
+  "news-dialog": {
+    "title": "Latest News",
+    "description": "Breaking news alerts, live event updates, and timely notifications are delivered right here. Use this dialog to catch up with everything happening now, without missing a beat.",
+    "submit": "Read Latest News",
+    "cancel": "Dismiss",
+    "close": "Close News Panel",
+    "open": "Show News Alert"
+  },
+  "preview-dialog": {
+    "title": "Preview Content",
+    "description": "See exactly how your article, image, or video will look before publishing it live. Use the preview dialog to spot mistakes, try new layouts, and make confident updates.",
+    "submit": "View Full Preview",
+    "cancel": "Exit Preview",
+    "close": "Close Preview Window",
+    "open": "Open Preview"
+  },
+  "topbar-banner": {
+    "title": "Topbar Banner Component | Real-Time Updates & Notifications",
+    "description": "Stay informed with our Topbar Banner – a responsive modal for displaying real-time updates, notifications, and alerts. Ideal for news sites, blogs, and content platforms to enhance user engagement and retention.",
+    "submit": "View News",
+    "cancel": "Close Notification",
+    "close": "Hide News Modal",
+    "open": "Open News Dialog"
   }
 }
